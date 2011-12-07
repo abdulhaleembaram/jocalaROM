@@ -1,0 +1,29 @@
+This project is a Gingerbread kernel and related files for the Samsung Epic 4G. 
+
+Its parts are:
+
+1. Samsung's release of GB source for the Epic 4G
+2. initramfs from rodderik@xda
+3. Kernel patches from mkasick@xda
+
+The patches I have applied are:
+
+fix_ce147_product.diff
+loose_vermagic.diff
+reboot_bml8_recovery.diff
+
+decomp_cachebufram.diff
+decomp_copy_atags.diff
+kexec_fixes.diff
+kexec_hardboot.diff
+relocate_pmstats.diff
+
+keypad_delays.diff
+keypad_delays_initrc.diff
+remove_ts_printks.diff
+sensitive_kb_printks.diff
+
+Props to rodderik & mkasick! I hope to further update
+this kernel as time, interest and comprehension allow.
+
+ 

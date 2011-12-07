@@ -1,0 +1,19 @@
+jocalaROM is based on stock EI22.
+
+Features:
+
+CWM 5.*
+Rooted/Superuser.apk
+Busybox (in kernel)
+Deodexed/Zipaligned
+CIQ removed [hat tip to k0nane!]
+Debloated
+bash shell [cyanogen7]
+busybox
+adb wireless
+terminal
+dropbear [ssh client/server]
+rsync
+/etc/terminfo
+nano and joe editors
+

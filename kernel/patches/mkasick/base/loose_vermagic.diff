@@ -1,0 +1,94 @@
+From: Mike Kasick <mike@kasick.org>
+Date: Tue, 18 Oct 2011 13:26:56 -0400
+
+Add MODULE_LOOSE_VERMAGIC option for compatibility with EH17 vermagic.
+
+Avoids the problem where proprietary modules have a vermagic of
+"2.6.35.7 preempt mod_unload ARMv7", and our kernels use ones like
+"2.6.35.7-g1b570a1-dirty preempt mod_unload ARMv7".  This keeps the
+otherwise-useful local version, but retains module compatibility across
+kernel builds.
+
+diff --git a/kernel/Makefile b/kernel/Makefile
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -915,6 +915,7 @@
+ prepare2: prepare3 outputmakefile
+ 
+ prepare1: prepare2 include/linux/version.h include/generated/utsrelease.h \
++                   include/generated/kernelversion.h \
+                    include/config/auto.conf
+ 	$(cmd_crmodverdir)
+ 
+@@ -948,12 +949,19 @@
+ 	echo '#define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))';)
+ endef
+ 
++define filechk_kernelversion.h
++	(echo \#define KERNELVERSION \"$(KERNELVERSION)\";)
++endef
++
+ include/linux/version.h: $(srctree)/Makefile FORCE
+ 	$(call filechk,version.h)
+ 
+ include/generated/utsrelease.h: include/config/kernel.release FORCE
+ 	$(call filechk,utsrelease.h)
+ 
++include/generated/kernelversion.h: $(srctree)/Makefile FORCE
++	$(call filechk,kernelversion.h)
++
+ PHONY += headerdep
+ headerdep:
+ 	$(Q)find include/ -name '*.h' | xargs --max-args 1 scripts/headerdep.pl
+diff --git a/kernel/arch/arm/configs/victory_8G_defconfig b/kernel/arch/arm/configs/victory_8G_defconfig
+--- a/kernel/arch/arm/configs/victory_8G_defconfig
++++ b/kernel/arch/arm/configs/victory_8G_defconfig
+@@ -154,6 +154,7 @@
+ CONFIG_MODULE_FORCE_UNLOAD=y
+ # CONFIG_MODVERSIONS is not set
+ # CONFIG_MODULE_SRCVERSION_ALL is not set
++CONFIG_MODULE_LOOSE_VERMAGIC=y
+ CONFIG_BLOCK=y
+ CONFIG_LBDAF=y
+ # CONFIG_BLK_DEV_BSG is not set
+diff --git a/kernel/include/linux/vermagic.h b/kernel/include/linux/vermagic.h
+--- a/kernel/include/linux/vermagic.h
++++ b/kernel/include/linux/vermagic.h
+@@ -1,3 +1,4 @@
++#include <generated/kernelversion.h>
+ #include <generated/utsrelease.h>
+ #include <linux/module.h>
+ 
+@@ -26,8 +27,14 @@
+ #define MODULE_ARCH_VERMAGIC ""
+ #endif
+ 
++#ifdef CONFIG_MODULE_LOOSE_VERMAGIC
++#define MODULE_VERMAGIC_RELEASE KERNELVERSION " "
++#else
++#define MODULE_VERMAGIC_RELEASE UTS_RELEASE " "
++#endif
++
+ #define VERMAGIC_STRING 						\
+-	UTS_RELEASE " "							\
++	MODULE_VERMAGIC_RELEASE						\
+ 	MODULE_VERMAGIC_SMP MODULE_VERMAGIC_PREEMPT 			\
+ 	MODULE_VERMAGIC_MODULE_UNLOAD MODULE_VERMAGIC_MODVERSIONS	\
+ 	MODULE_ARCH_VERMAGIC
+diff --git a/kernel/init/Kconfig b/kernel/init/Kconfig
+--- a/kernel/init/Kconfig
++++ b/kernel/init/Kconfig
+@@ -1278,6 +1278,13 @@
+ 	  the version).  With this option, such a "srcversion" field
+ 	  will be created for all modules.  If unsure, say N.
+ 
++config MODULE_LOOSE_VERMAGIC
++	bool "Do not include local version in vermagic string"
++	help
++	  Use KERNELVERSION instead of (and which is a subset of) UTS_RELEASE in
++	  the vermagic string.  This allows compatibility with proprietary modules
++	  that do not append any local version to UTS_RELEASE.
++
+ endif # MODULES
+ 
+ config INIT_ALL_POSSIBLE

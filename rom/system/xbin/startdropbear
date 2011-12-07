@@ -1,0 +1,21 @@
+#!/system/bin/sh
+
+# set up dropbear environment 
+if [ ! -f /data/dropbear/dropbear_rsa_host_key ]
+  then
+   
+     mkdir /data/dropbear
+     mkdir /data/local/.ssh
+    /system/xbin/dropbearkey -t rsa -f /data/dropbear/dropbear_rsa_host_key
+
+fi
+
+
+# start dropbox with password 'password' (no quotes)
+#change password below 
+
+if [ -d /data/dropbear/ ] ; then
+    echo "Starting SSH"
+    /system/xbin/dropbear -A -N root -U 0 -G 0 -C password -r /data/dropbear/dropbear_rsa_host_key
+fi
+

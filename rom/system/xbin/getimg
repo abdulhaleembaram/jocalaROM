@@ -1,0 +1,7 @@
+#!/system/bin/sh
+
+rm /sdcard/temp/*
+
+dd if=/dev/block/bml7 of=/sdcard/temp/zImage bs=4096
+dd if=/dev/block/bml8 of=/sdcard/temp/recovery.bin bs=4096
+dd if=/dev/block/stl9 of=/sdcard/temp/factoryfs.rfs bs=4096

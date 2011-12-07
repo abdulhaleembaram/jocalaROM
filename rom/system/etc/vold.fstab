@@ -1,0 +1,28 @@
+## Vold 2.0 Generic fstab
+## - San Mehat (san@android.com)
+## 
+
+#######################
+## Regular device mount
+##
+## Format: dev_mount <label> <mount_point> <part> <sysfs_path1...> 
+## label        - Label for the volume
+## mount_point  - Where the volume will be mounted
+## part         - Partition # (1 based), or 'auto' for first usable partition.
+## <sysfs_path> - List of sysfs paths to source devices
+######################
+
+
+# externel sdcard
+{
+	mount_deep = 1
+	# SecFeature:SPH-D700 :Start:To solve mount sd card problem 
+	# SecFeature SPH-D700: Resolve USB Massstorage mounting on system.	
+        ums_path = /sys/devices/platform/usb_mass_storage/lun0/file      
+	asec = enable
+	mbr_policy = overwrite
+
+}
+dev_mount sdcard1 /mnt/sdcard auto /devices/platform/s3c-sdhci.2/mmc_host/mmc2/
+#dev_mount sdcard1 /mnt/sdcard auto /devices/platform/s3c-sdhci.2/mmc_host/mmc2/mmc2:0001/block/mmcblk0
+#end line ## keep this line

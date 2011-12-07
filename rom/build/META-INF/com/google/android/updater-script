@@ -1,0 +1,63 @@
+ui_print(" ");
+ui_print("** Installing jocalaROM v1.0 **");
+ui_print(" ");
+
+show_progress(2.000000, 0);
+set_progress(0.400000);
+
+ui_print(" ");
+ui_print("Mounting Partitions");
+ui_print(" ");
+
+run_program("/sbin/mount", "/system");
+run_program("/sbin/mount", "/cache");
+run_program("/sbin/mount", "/data");
+run_program("/sbin/mount", "/datadata");
+set_progress(0.400000);
+
+ui_print(" ");
+ui_print("Wiping Device");
+ui_print(" ");
+
+delete_recursive("/system");
+delete_recursive("/data/dalvik-cache");
+delete_recursive("/cache/dalvik-cache");
+delete_recursive("/data");
+delete_recursive("/cache");
+set_progress(0.600000);
+
+ui_print(" ");
+ui_print("Copying System Files");
+ui_print(" ");
+
+package_extract_dir("system", "/system");
+set_perm_recursive(0, 0, 0755, 0644, "/system/app");
+set_perm_recursive(0, 0, 0755, 0644, "/system/bin");
+set_perm_recursive(0, 0, 0755, 0644, "/system/xbin");
+
+
+set_progress(0.800000);
+
+ui_print(" ");
+ui_print("Setting File Permissions");
+ui_print(" ");
+
+set_perm_recursive(0, 0, 0755, 0644, "/system");
+set_perm_recursive(0, 2000, 0755, 0755, "/system/bin");
+set_perm_recursive(0, 0, 0755, 0755, "/system/etc");
+set_perm_recursive(0, 0, 0755, 0755, "/system/xbin");
+set_perm(0, 3003, 02755, "/system/bin/netcfg");
+set_perm(0, 3004, 02755, "/system/bin/ping");
+set_perm_recursive(1002, 1002, 0755, 0440, "/system/etc/bluetooth");
+set_perm(0, 0, 0755, "/system/etc/bluetooth");
+set_perm(0, 0, 0755, "/system/vendor/bin/gpsd");
+set_perm(1002, 1002, 0440, "/system/etc/dbus.conf");
+set_perm(1014, 2000, 0550, "/system/etc/dhcpcd/dhcpcd-run-hooks");
+set_perm(0, 2000, 0550, "/system/etc/init.goldfish.sh");
+set_perm_recursive(0, 0, 0777, 0777, "/system/etc/init.d");
+
+
+ui_print(" ");
+ui_print("jocalaROM Installation Complete!");
+ui_print(" ");
+ui_print("** Please Reboot **");
