@@ -1,0 +1,3 @@
+base:     Patches to get GB sources in a buildable state with userdebug
+keyboard: Hardware keyboard dropped key press fix
+kexec;    Patches for kernel kexec syscall support

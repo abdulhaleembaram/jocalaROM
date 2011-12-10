@@ -1,0 +1,5 @@
+relocate_pmstats.diff
+kexec_fixes.diff
+decomp_cachebufram.diff
+decomp_copy_atags.diff
+kexec_hardboot.diff

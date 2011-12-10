@@ -1,0 +1,120 @@
+Patches for kernel kexec syscall support for GB kernels
+
+
+To be applied against the Samsung Epic 4G GB kernel sources:
+
+https://opensource.samsung.com/
+SPH-D700_GB_Opensource.zip / SPH-D700_GB_Kernel.tar.gz
+
+with patches applied from:
+http://www.club.cc.cmu.edu/~mkasick/android/kernel-GB-2-patches.tar.gz (base)
+
+
+There are two different kernel roles with regard to kexec support:
+
+boot:
+    The kernel installed to bml[78] and invoked by the bootloader.  These
+    must implement the kexec syscall.  They must also contain special code
+    to jump to a hardbooted-kexec'd kernel.
+
+kexec'd:
+    Any kernel that's booted via kexec.
+
+The following patches, for both the kernel roles (boot & kexec'd) are
+listed as required, recommended, or optional for that role.  Note that all
+patches _can_ (and is recommended to) be applied to a single kernel build,
+and that same image may be used in both boot and kexec'd capacities.  Such
+a kernel is also capable of recursively kexecing itself.
+
+Do note that these patches modify victory_8G_defconfig to enable new config
+options required for boot kernels.  If using a different kernel config,
+these options should be appended:
+
+CONFIG_KEXEC=y
+CONFIG_ATAGS_PROC=y
+CONFIG_KEXEC_HARDBOOT=y
+
+
+relocate_pmstats.diff (boot: optional, kexec'd: optional):
+    Relocate pmstats to avoid conflict with kexec hardboot page.
+
+    GB reserves the last page (4 kB) of physical RAM, after the ram_console,
+    for pm_debug_scratchpad (pmstats).  This conflicts with that memory's usage
+    as the hardboot page, already in use in kexec-enabled EC05 kernels.
+
+    Since pmstats uses very little of the whole 4 kB, move the scratchpad
+    forward to leave 1 kB of memory available for kexec.  Also requires fixing
+    up pmstats alloc and copy routines to not attempt to read the whole page.
+
+    Not strictly needed for kexec.  It's OK for the hardboot page to be
+    overwritten by the kernel at runtime, and similarly pmstats will function
+    as well.  However, the ability to read pmstats_last from a previous boot
+    requires the scratchpad to be preserved across boots.
+
+
+kexec_fixes.diff (boot: required, kexec'd: optional):
+    Enable kexec syscall and fix support for ARMv7.
+
+    Essentially a backport of the relevant functions from Linux 3.1-rc4.  In
+    particular, it now actually disables cache and the MMU in preparation for
+    soft boot.  Without this, relocate_new_kernel() would hang for an unknown
+    reason.  Although, it's known that there's no safe way to execute that
+    function with the MMU on as it may overwrite active page tables.
+
+    The suggestion to call cpu_reset by its physical address comes from an
+    earlier kexec support patch by Will Deacon [1].  The arm_machine_restart()
+    modification is primarily to ensure setup_mm_for_reboot() is called before
+    cache is disabled, since setting the page table mappings takes a very long
+    time if done after.
+
+    Note that this patch alone implements only the traditional soft-boot kexec
+    approach, which is incapable of fully booting an Epic kernel.  See the
+    below "hardboot" patch.
+
+
+decomp_cachebufram.diff (boot: optional, kexec'd: recommended)
+    Enable caching and buffering for all of physical RAM in the decompressor.
+
+    Old method is to enable caching and buffering only for the 256 MB at the
+    start of the decompressor image.  This makes a hardboot-kexec'd kernel very
+    slow to decompress since the decompressor is located far above the kernel
+    destination.  This patch reduces boot time from 35 to 8 seconds.
+
+    Safe to apply, but otherwise has no measurable effect on boot kernels.
+
+
+decomp_copy_atags.diff (boot: optional, kexec'd: recommended):
+    Support copying of kernel tagged list (atags) in the decompressor.
+
+    This is needed to hardboot kexec a kernel with a new tags list (including a
+    new kernel command line), since the new atags would otherwise be lost with
+    the limited kernel memory mapping.  Without this patch, a hardboot-kexec'd
+    kernel uses the atags provided by the bootloader.
+
+
+kexec_hardboot.diff (boot: required, kexec'd: optional):
+    Support hard booting to a kexec kernel.
+
+    Allows hard booting (i.e., with a full hardware reboot) to a kernel
+    previously loaded in memory by kexec.  This works around the problem of
+    soft-booted kernel hangs due to improper device shutdown and/or
+    reinitialization.  Support is comprised of two components:
+
+    First, a "hardboot" flag is added to the kexec syscall to force a hard
+    reboot in relocate_new_kernel() (which requires machine-specific assembly
+    code).  This also requires the kexec userspace tool to load the kexec'd
+    kernel in memory region left untouched by the bootloader (i.e., not
+    explicitly cleared and not overwritten by the boot kernel).  Just prior to
+    reboot, the kexec kernel arguments are stashed in a machine-specific memory
+    page that must also be preserved.  Note that this hardboot page need not be
+    reserved during regular kernel execution.  However at its present location
+    above the RAM console (0x57fff000), the parameter page _is_ preserved
+    during execution for debugging purposes, accessible with busybox's devmem.
+
+    Second, the zImage decompresor of the boot (bootloader-loaded) kernel is
+    modified to check the hardboot page for fresh kexec arguments, and if
+    present, attempts to jump to the kexec'd kernel preserved in memory.
+
+
+[1] W. Deacon. [4/6] ARM: reset: add reset functionality for jumping to a
+    physical address, Jun. 2011. https://patchwork.kernel.org/patch/852802/
