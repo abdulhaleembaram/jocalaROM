@@ -49,7 +49,7 @@ TARGET_LOCALE="vzw"
 
 #uncomment to add custom version string
 export KBUILD_BUILD_VERSION="jocalaROM"
-DEFCONFIG_STRING=victory_8G_defconfig
+DEFCONFIG_STRING=victory_jocala_defconfig
 
 TOOLCHAIN=/storage/arm-2009q3/bin
 TOOLCHAIN_PREFIX=arm-none-linux-gnueabi-
@@ -103,7 +103,6 @@ BUILD_KERNEL()
 	pushd $KERNEL_BUILD_DIR
 		export KDIR=`pwd`
 		make ARCH=arm $DEFCONFIG_STRING
-#		make -j$CPU_JOB_NUM ARCH=arm CROSS_COMPILE=$TOOLCHAIN/$TOOLCHAIN_PREFIX
 		make V=1 -j$CPU_JOB_NUM ARCH=arm CROSS_COMPILE=$TOOLCHAIN/$TOOLCHAIN_PREFIX 2>&1 | tee make.out
 	popd
 	zip -x build_kernel.sh  -r update.zip *
