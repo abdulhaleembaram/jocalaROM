@@ -30,11 +30,12 @@ ui_print(" ");
 ui_print("Copying System Files");
 ui_print(" ");
 
-package_extract_dir("system", "/system");
+
 set_perm_recursive(0, 0, 0755, 0644, "/system/app");
 set_perm_recursive(0, 0, 0755, 0644, "/system/bin");
 set_perm_recursive(0, 0, 0755, 0644, "/system/xbin");
 
+package_extract_dir("data", "/data");
 
 set_progress(0.800000);
 
